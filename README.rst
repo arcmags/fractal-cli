@@ -1,5 +1,5 @@
 ===========
-fraktal-cli
+fractal-cli
 ===========
 
 Display and navigate the mandelbrot set in color ascii.
