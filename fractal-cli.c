@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
     (strcmp(argv[1], "-H") == 0 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
         printf("Usage:\n\
   fractal-cli\n\n\
-View and navigate the Mandelbrot set in pure ascii.\n\n\
+View and navigate the Mandelbrot set in glorious six color ascii.\n\n\
 Keys:\n\
   h j k l   move left, down, up, right\n\
   H J K L   move left, down, up, right 8 cells\n\

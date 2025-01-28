@@ -1,7 +1,7 @@
 # fractal-cli
 
-View and navigate the Mandelbrot set in glorious 6 color ascii in your terminal
-of choice.
+View and navigate the Mandelbrot set in glorious six color ascii in your
+terminal of choice.
 
 ![terminal](terminal.png)
 
