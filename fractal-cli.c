@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
         printf("Usage:\n\
   fractal-cli\n\n\
 View and navigate the Mandelbrot set in glorious six color ascii.\n\n\
-Keys:\n\
+Key Bindings:\n\
   h j k l   move left, down, up, right\n\
   H J K L   move left, down, up, right 8 cells\n\
   n p       increase, decrease max iterations\n\
@@ -38,7 +38,7 @@ Keys:\n\
         init_pair(4, 4, 0);
         init_pair(5, 6, 0);
         init_pair(6, 5, 0);
-        init_pair(7, 12, 4);
+        init_pair(7, 4, 4);
         init_pair(8, 0, 4);
         init_pair(9, 2, 4);
         init_pair(10, 3, 4);
