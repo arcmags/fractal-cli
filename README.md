@@ -15,7 +15,7 @@ Build binary:
 
 Install to *~/.local/bin* (or */usr/local/bin* if run as root):
 
-    $ make uninstall
+    $ make install
 
 Uninstall:
 
