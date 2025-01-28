@@ -1,232 +1,197 @@
 #include <stdlib.h>
 #include <ncurses.h>
-#include <signal.h>
+#include <string.h>
 
-typedef struct graph {
-    double startX;      // upper left x-coordinate
-    double startY;      // upper left y-coordinate
-    double scale;       // width of window
-    double yToX;        // ratio of row height to column width
-    int maxIterations;  // max number of interations to perform
-    char output[5];     // output characters
-} graph;
-
-void waitKey(graph*);
-void drawScreen(graph*);
-void makeScreen(graph*);
-
-int main (void) {
-    graph mSet;
-    mSet.maxIterations = 40;
-    mSet.output[0]='*';
-    mSet.output[1]='$';
-    mSet.output[2]='@';
-    mSet.output[3]='#';
-    mSet.output[4]='%';
-    mSet.yToX = 1.66;
-    mSet.startX = -2;
-    mSet.startY = .75;
-    mSet.scale = 3;
-    makeScreen(&mSet);
-    waitKey(&mSet);
-    endwin();
-    return 0;
-}
-
-void waitKey(graph* mSet) {
-    int ch;
-    for (;;) {
-        ch = getch();
-        // screen resize:
-        if (ch == KEY_RESIZE) {
-            endwin();
-            refresh();
-            drawScreen(mSet);
-        }
-        // navigation:
-        if (ch == 'h') {
-            mSet->startX = mSet->startX - mSet->scale / (double)COLS;
-            drawScreen(mSet);
-        }
-        if (ch == 'H') {
-            mSet->startX = mSet->startX - (mSet->scale / (double)COLS)*10;
-            drawScreen(mSet);
-        }
-        if (ch == 'j') {
-            mSet->startY = mSet->startY - (mSet->scale / (double)COLS) * mSet->yToX;
-            drawScreen(mSet);
-        }
-        if (ch == 'J') {
-            mSet->startY = mSet->startY - (mSet->scale / (double)COLS) * mSet->yToX*10;
-            drawScreen(mSet);
-        }
-        if (ch == 'l') {
-            mSet->startX = mSet->startX + mSet->scale / (double)COLS;
-            drawScreen(mSet);
-        }
-        if (ch == 'L') {
-            mSet->startX = mSet->startX + (mSet->scale / (double)COLS) *10;
-            drawScreen(mSet);
-        }
-        if (ch == 'k') {
-            mSet->startY = mSet->startY + (mSet->scale / (double)COLS) * mSet->yToX;
-            drawScreen(mSet);
-        }
-        if (ch == 'K') {
-            mSet->startY = mSet->startY + (mSet->scale / (double)COLS) * mSet->yToX*10;
-            drawScreen(mSet);
-        }
-        // iterations::
-        if (ch == 'u') {
-            mSet->maxIterations=mSet->maxIterations+1;
-            drawScreen(mSet);
-        }
-        if (ch == 'y') {
-            mSet->maxIterations=mSet->maxIterations-1;
-            drawScreen(mSet);
-        }
-        // zoom:
-        if (ch == 'n') {
-            mSet->startX = mSet->startX + mSet->scale*0.025;
-            mSet->startY = mSet->startY - mSet->scale*0.015060;
-            mSet->scale = mSet->scale*0.95;
-            mSet->maxIterations= mSet->maxIterations + 1;
-            drawScreen(mSet);
-        }
-        if (ch == 'p') {
-            mSet->startX = mSet->startX - mSet->scale*0.0263158;
-            mSet->startY = mSet->startY + mSet->scale*0.0158529;
-            mSet->scale = mSet->scale*1.052632;
-            mSet->maxIterations= mSet->maxIterations -1;
-            drawScreen(mSet);
-        }
-        // reset:
-        if (ch == '0') {
-            mSet->startX = -2;
-            mSet->startY = .75;
-            mSet->scale = 3;
-            mSet->maxIterations=40;
-            drawScreen(mSet);
-        }
-        // quit:
-        if (ch == 'q') {
-            return;
-        }
+int main(int argc, char *argv[]) {
+    if (argc > 1 &&
+    (strcmp(argv[1], "-H") == 0 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
+        printf("Usage:\n\
+  fractal-cli\n\n\
+View and navigate the Mandelbrot set in pure ascii.\n\n\
+Keys:\n\
+  h j k l   move left, down, up, right\n\
+  H J K L   move left, down, up, right 8 cells\n\
+  n p       increase, decrease max iterations\n\
+  N P       increase, decrease max iterations by 8\n\
+  i o       zoom in, zoom out\n\
+  0 R       reset\n\
+  q Q       quit\n");
+        exit(0);
     }
-}
 
-void makeScreen(graph* mSet) {
+    double startX = -2;
+    double startY = .75;
+    double yToX = 1.66;
+    int maxIterations = 256;
+    char output[5] = {'@', '8', '$', '#', '&' };
+    char charX;
+    int ch, yI, xI, max;
+    double x, y, xDelta, yDelta, xO, yO, xN, yN;
+    double scale = 3;
+
     initscr();
-    if(has_colors() == FALSE) {
-        endwin();
-		printf("Your terminal does not support color\n");
-		exit(1);
-	}
-
+    start_color();
+    if (COLORS <= 8) {
+        init_pair(1, 1, 0);
+        init_pair(2, 3, 0);
+        init_pair(3, 2, 0);
+        init_pair(4, 4, 0);
+        init_pair(5, 6, 0);
+        init_pair(6, 5, 0);
+        init_pair(7, 12, 4);
+        init_pair(8, 0, 4);
+        init_pair(9, 2, 4);
+        init_pair(10, 3, 4);
+    }
+    else {
+        init_pair(1, 9, 0);
+        init_pair(2, 11, 0);
+        init_pair(3, 10, 0);
+        init_pair(4, 12, 0);
+        init_pair(5, 14, 0);
+        init_pair(6, 13, 0);
+        init_pair(7, 12, 4);
+        init_pair(8, 8, 4);
+        init_pair(9, 10, 4);
+        init_pair(10, 3, 4);
+    }
+    attron(A_BOLD);
     curs_set(0);
     keypad(stdscr, TRUE);
     nonl();
     noecho();
 
-    start_color();
-    init_pair(1, COLOR_WHITE, COLOR_BLACK);
-    init_pair(2, COLOR_RED, COLOR_BLACK);
-    init_pair(3, COLOR_YELLOW, COLOR_BLACK);
-    init_pair(4, COLOR_GREEN, COLOR_BLACK);
-    init_pair(5, COLOR_BLUE, COLOR_BLACK);
-    init_pair(6, COLOR_CYAN, COLOR_BLACK);
-    init_pair(7, COLOR_MAGENTA, COLOR_BLACK);
-    init_pair(8, COLOR_WHITE, COLOR_BLUE);
+    for (;;) {
+        clear();
+        xDelta = scale / (double)COLS;
+        yDelta = xDelta * yToX;
 
-    attron(A_BOLD);
+        for (yI=0; yI<LINES; yI++) {
+            for (xI=0; xI<COLS; xI++) {
+                x = startX + (double)xI * xDelta;
+                y = startY - (double)yI * yDelta;
+                xO = x;
+                yO = y;
 
-    drawScreen(mSet);
-}
-
-
-// draws the screen
-void drawScreen(graph* mSet) {
-    clear();
-
-    double xDelta = mSet->scale / (double)COLS;
-    double yDelta = xDelta * mSet->yToX;
-
-    int yI;
-    int xI;
-    double x;
-    double y;
-    int max;
-    char charX;
-
-    for (yI=0; yI<LINES; yI++) {
-        for (xI=0; xI<COLS; xI++) {
-            move(yI,xI);
-
-            // get x and y of current grid character
-            x = mSet->startX + ((double)xI) * xDelta;
-            y = mSet->startY - ((double)yI) * yDelta;
-            // set initial xO and yO
-            double xO=x;
-            double yO=y;
-            // temp variables
-            double xN;
-            double yN;
-
-            // iterate z^2 + zO while |z^2 + zO| <= 2
-            max=0;
-            while (x*x+y*y <= 4 && max < mSet->maxIterations) {
-                xN= x*x - y*y + xO;
-                yN = 2*x*y + yO;
-                x=xN;
-                y=yN;
-                max++;
-            }
-
-            // set character and color depending on number of iterations required to get |z^2 + zO| > 2
-            if (max < mSet->maxIterations) {
-
-                charX=mSet->output[max%5];
-                if (max < 3) {
-                    charX='.';
-                }
-                if (max == 3) {
-                    charX=',';
+                // iterate z^2 + zO while |z^2 + zO| <= 2:
+                max = 0;
+                while (x*x+y*y <= 4 && max < maxIterations) {
+                    xN = x * x - y * y + xO;
+                    yN = 2 * x * y + yO;
+                    x = xN;
+                    y = yN;
+                    max++;
                 }
 
-                attron(COLOR_PAIR((max/5)%6+2));
-                addch(charX);
+                // set char and color from number of iterations required to get |z^2 + zO| > 2:
+                if (max < maxIterations) {
+                    charX = output[max%5];
+                    if (max < 3) {
+                        charX = '.';
+                    } else if (max == 3) {
+                        charX = ',';
+                    }
+                    // print char:
+                    attron(COLOR_PAIR((max/5)%6+1));
+                    mvaddch(yI, xI, charX);
+                }
             }
         }
-    }
 
-    // display commands on bottom of window
-    attron(COLOR_PAIR(1));
-    mvprintw(LINES-1,0,"iterations: ");
-    attron(COLOR_PAIR(5));
-    mvprintw(LINES-1,12,"%d ",mSet->maxIterations);
-    attron(COLOR_PAIR(8));
-    mvprintw(LINES-1,(COLS-74),"[hjkl]");
-    attron(COLOR_PAIR(1));
-    mvprintw(LINES-1,(COLS-68),"/");
-    attron(COLOR_PAIR(8));
-    mvprintw(LINES-1,(COLS-67),"[HJKL]");
-    attron(COLOR_PAIR(1));
-    mvprintw(LINES-1,(COLS-61),"navigate   ");
-    attron(COLOR_PAIR(8));
-    mvprintw(LINES-1,(COLS-50),"[np]");
-    attron(COLOR_PAIR(1));
-    mvprintw(LINES-1,(COLS-46),"+zoom-   ");
-    attron(COLOR_PAIR(8));
-    mvprintw(LINES-1,(COLS-37),"[yu]");
-    attron(COLOR_PAIR(1));
-    mvprintw(LINES-1,(COLS-33),"+iterations-   ");
-    attron(COLOR_PAIR(8));
-    mvprintw(LINES-1,(COLS-18),"[0]");
-    attron(COLOR_PAIR(1));
-    mvprintw(LINES-1,(COLS-15),"reset   ");
-    attron(COLOR_PAIR(8));
-    mvprintw(LINES-1,(COLS-7),"[q]");
-    attron(COLOR_PAIR(1));
-    mvprintw(LINES-1,(COLS-4),"quit");
-    refresh();
+        attron(COLOR_PAIR(7));
+        for (xI=0; xI<COLS; xI++) {
+            mvprintw(LINES-1, xI, " ");
+        }
+        attron(COLOR_PAIR(9));
+        mvprintw(LINES-1, 1, "Mandelbrot");
+        if (COLS > 34) {
+            attron(COLOR_PAIR(10));
+            mvprintw(LINES-1, COLS-23, "%.14f", scale);
+            attron(COLOR_PAIR(8));
+            printw(" | ");
+            attron(COLOR_PAIR(7));
+            printw("%d", maxIterations);
+        }
+        refresh();
+
+        ch = getch();
+        switch (ch) {
+            case 'h':
+            case KEY_LEFT:
+                startX = startX - scale / (double)COLS;
+                break;
+            case 'j':
+            case KEY_DOWN:
+                startY = startY - scale / (double)COLS * yToX;
+                break;
+            case 'k':
+            case KEY_UP:
+                startY = startY + scale / (double)COLS * yToX;
+                break;
+            case 'l':
+            case KEY_RIGHT:
+                startX = startX + scale / (double)COLS;
+                break;
+            case 'H':
+                startX = startX - scale / (double)COLS * 8;
+                break;
+            case 'J':
+                startY = startY - scale / (double)COLS * yToX * 8;
+                break;
+            case 'K':
+                startY = startY + scale / (double)COLS * yToX * 8;
+                break;
+            case 'L':
+                startX = startX + scale / (double)COLS * 8;
+                break;
+            case 'n':
+                maxIterations = maxIterations + 1;
+                break;
+            case 'p':
+                maxIterations = maxIterations - 1;
+                if (maxIterations < 1) {
+                    maxIterations = 1;
+                }
+                break;
+            case 'N':
+                maxIterations = maxIterations + 8;
+                break;
+            case 'P':
+                maxIterations = maxIterations - 8;
+                if (maxIterations < 1) {
+                    maxIterations = 1;
+                }
+                break;
+            case 'i':
+            case '+':
+                startX = startX + scale * 0.025;
+                startY = startY - scale * 0.015060;
+                scale = scale * 0.95;
+                break;
+            case 'o':
+            case '-':
+                startX = startX - scale * 0.0263158;
+                startY = startY + scale * 0.0158529;
+                scale = scale * 1.052632;
+                break;
+            case '0':
+            case 'R':
+                startX = -2;
+                startY = .75;
+                scale = 3;
+                maxIterations = 256;
+                break;
+            case 'Q':
+            case 'q':
+                endwin();
+                return 0;
+                break;
+            case KEY_RESIZE:
+                endwin();
+                refresh();
+                break;
+        }
+    }
+    endwin();
+    return 0;
 }
