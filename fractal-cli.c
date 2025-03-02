@@ -2,20 +2,23 @@
 #include <ncurses.h>
 #include <string.h>
 
+// TODO: color cycle key binding?
+// TODO: other fractals?
+
 int main(int argc, char *argv[]) {
     if (argc > 1 &&
-    (strcmp(argv[1], "-H") == 0 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
+    (strcmp(argv[1], "-H") == 0 || strcmp(argv[1], "--help") == 0)) {
         printf("Usage:\n\
   fractal-cli\n\n\
 View and navigate the Mandelbrot set in glorious six color ascii.\n\n\
 Key Bindings:\n\
-  h j k l   move left, down, up, right\n\
-  H J K L   move left, down, up, right 8 cells\n\
-  n p       increase, decrease max iterations\n\
-  N P       increase, decrease max iterations by 8\n\
-  i o       zoom in, zoom out\n\
-  0 R       reset\n\
-  q Q       quit\n");
+  h, j, k, l    move left, down, up, right\n\
+  H, J, K, L    move left, down, up, right 8 cells\n\
+  n, p          increase, decrease max iterations\n\
+  N, P          increase, decrease max iterations by 8\n\
+  i, o          zoom in, zoom out\n\
+  0 R           reset\n\
+  q Q           quit\n");
         exit(0);
     }
 
@@ -164,15 +167,15 @@ Key Bindings:\n\
                 break;
             case 'i':
             case '+':
+                scale = scale * 0.95;
                 startX = startX + scale * 0.025;
                 startY = startY - scale * 0.015060;
-                scale = scale * 0.95;
                 break;
             case 'o':
             case '-':
+                scale = scale * 1.052632;
                 startX = startX - scale * 0.0263158;
                 startY = startY + scale * 0.0158529;
-                scale = scale * 1.052632;
                 break;
             case '0':
             case 'R':

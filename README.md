@@ -29,25 +29,25 @@ Run in a terminal:
 
 ### Key Bindings
 
-`h j k l`
+`h` `j` `k` `l`
 : move left, down, up, right
 
-`H J K L`
+`H` `J` `K` `L`
 : move left, down, up, right 8 cells
 
-`n p`
+`n`, `p`
 : increase, decrease max iterations
 
-`N P`
+`N`, `P`
 : increase, decrease max iterations by 8
 
-`i o`
+`i`, `o`
 : zoom in, zoom out
 
-`0 R`
+`0` `R`
 : reset
 
-`q Q`
+`q` `Q`
 : quit
 
 [BDS0](https://opensource.org/license/0BSD) | [mags](https://mags.zone)
